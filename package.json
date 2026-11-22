@@ -1,0 +1,65 @@
+{
+  "name": "@webberdoo/wai-mcp",
+  "version": "0.1.0",
+  "description": "Local MCP stdio bridge for Webberdoo Agent Intelligence x402-paid intelligence APIs",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:smoke": "node test/mcp-smoke.mjs",
+    "test:package": "node test/package-readiness.mjs",
+    "test:release": "npm test && npm run test:smoke && npm run test:package",
+    "test:tarball": "node test/tarball-install.mjs",
+    "test:download": "node test/verify-report-download.mjs"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@x402/core": "^2.0.0",
+    "@x402/evm": "^2.0.0",
+    "@x402/fetch": "^2.0.0",
+    "viem": "^2.0.0",
+    "zod": "^4.0.0"
+  },
+  "license": "MIT",
+  "bin": {
+    "wai-mcp": "bin/wai-mcp.mjs"
+  },
+  "files": [
+    "bin/wai-mcp.mjs",
+    "dist/server.mjs",
+    "src/core.mjs",
+    "src/runner.mjs",
+    "src/discovery.mjs",
+    "src/report-files.mjs",
+    "RUN-PHASE5.ps1",
+    "RUN-PHASE6.ps1",
+    "test/live-paid-once.mjs",
+    "test/live-paid-remaining.mjs",
+    "examples/mcp-host.json",
+    "server.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "homepage": "https://wai.webberdoo.com",
+  "keywords": [
+    "mcp",
+    "x402",
+    "agent",
+    "base",
+    "usdc",
+    "intelligence",
+    "webberdoo"
+  ],
+  "mcpName": "io.github.webberdoocom/wai-mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webberdoocom/wai-mcp.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

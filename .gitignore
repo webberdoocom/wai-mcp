@@ -1,0 +1,26 @@
+node_modules/
+.env
+.env.*
+*.env
+.npmrc
+.mcpregistry*
+reports/
+wai-*-????????????????????????????????.json
+*.tgz
+*.zip
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+*wallet*.json
+*credential*.json
+*secret*.json
+keystore/
+.secrets/
+.cursor/
+.vscode/
+.DS_Store
+# Local archive of earlier deployment and override instructions.
+/README-*.txt
+/README-*.md
