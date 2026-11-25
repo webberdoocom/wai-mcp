@@ -4,7 +4,7 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import * as z from 'zod/v4';
 import { makeRunner, toMcpResult } from '../src/runner.mjs';
 import { VERSION } from '../src/core.mjs';
-import { DEX_INPUT_SCHEMA, fetchCatalog } from '../src/discovery.mjs';
+import { DEX_INPUT_SCHEMA, DEX_PRICE_CENTS, DEX_TOOL_NAME, fetchCatalog } from '../src/discovery.mjs';
 const runner = makeRunner();
 const address = z.string().regex(/^0x(?!0{40}$)[a-fA-F0-9]{40}$/, 'Must be a nonzero EVM address');
 const chainId = z.literal([8453, 84532]);
@@ -36,10 +36,20 @@ const serverFactory = () => {
         inputSchema: z.object({ domain: z.string().min(4).max(253).regex(/^(?=.{4,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/, 'Public DNS hostname required') }),
     }, toMcpResult(({ domain }) => runner.run('inspect_website_trust', { domain })));
     if (process.env.WAI_DYNAMIC_DISCOVERY !== 'off') {
+        let catalogue;
+        server.registerTool(DEX_TOOL_NAME, {
+            description: `WAI discovery: Base Mainnet pool identity, on-chain liquidity, available LP evidence and single-pool swap depth estimates. Price: $${(DEX_PRICE_CENTS / 100).toFixed(2)} USDC. New service payments require explicit local allowlisting.`,
+            inputSchema: fromJsonSchema(DEX_INPUT_SCHEMA),
+        }, toMcpResult(async (args) => {
+            // The tool is always listed when discovery is enabled. Execution uses the
+            // current fetch, including a failed refresh, before making any WAI POST.
+            const spec = await catalogue.then(services => services.get(DEX_TOOL_NAME), () => undefined);
+            if (!spec)
+                throw new Error('DEX Liquidity Intelligence is unavailable because the live WAI catalogue could not be validated. No payment was attempted.');
+            return runner.runDynamic(spec, args);
+        }));
         const installed = new Map();
         const schemaFor = (spec) => {
-            if (spec.dex)
-                return fromJsonSchema(DEX_INPUT_SCHEMA);
             const shape = {};
             for (const [field, rule] of Object.entries(spec.fields)) {
                 let value;
@@ -60,8 +70,9 @@ const serverFactory = () => {
             return z.object(shape).strict();
         };
         const refresh = async () => {
+            catalogue = fetchCatalog(runner.config.base);
             try {
-                const next = await fetchCatalog(runner.config.base);
+                const next = await catalogue;
                 for (const [name, old] of installed) {
                     if (!next.has(name) || JSON.stringify(next.get(name)) !== old.signature) {
                         old.handle.remove();
@@ -69,7 +80,7 @@ const serverFactory = () => {
                     }
                 }
                 for (const [name, spec] of next) {
-                    if (installed.has(name))
+                    if (name === DEX_TOOL_NAME || installed.has(name))
                         continue;
                     const handle = server.registerTool(name, {
                         description: `WAI discovery: ${spec.description} Price: $${(spec.cents / 100).toFixed(2)} USDC. New service payments require explicit local allowlisting.`,
@@ -77,10 +88,11 @@ const serverFactory = () => {
                     }, toMcpResult((args) => runner.runDynamic(spec, args)));
                     installed.set(name, { handle, signature: JSON.stringify(spec) });
                 }
-                console.error(`WAI discovery: ${installed.size} additional tool(s) available`);
+                const dexStatus = next.has(DEX_TOOL_NAME) ? 'DEX catalogue validated' : 'DEX catalogue unavailable or incompatible';
+                console.error(`WAI discovery: ${dexStatus}; ${installed.size} other tool(s) available`);
             }
-            catch (error) {
-                console.error('WAI discovery unavailable; the six built-in tools remain available.');
+            catch {
+                console.error('WAI discovery unavailable; DEX requires a valid catalogue to run. The six original tools remain available.');
             }
         };
         void refresh();

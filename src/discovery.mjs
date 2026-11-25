@@ -4,6 +4,8 @@ const NAME = /^[a-z][a-z0-9-]{1,63}$/;
 const INPUT = /^[a-zA-Z][a-zA-Z0-9]{0,63}$/;
 const MAX_SERVICES = 60;
 const MAX_BYTES = 131072;
+export const DEX_TOOL_NAME = 'wai_dex_liquidity';
+export const DEX_PRICE_CENTS = 2;
 const DEX_PROTOCOLS = Object.freeze({
   'uniswap-v2': [], 'uniswap-v3': ['fee'], 'uniswap-v4': ['fee','tickSpacing'],
   'aerodrome-classic': ['stable'], 'aerodrome-slipstream': ['tickSpacing'],
@@ -147,11 +149,11 @@ function readDex(s, base) {
   if (typeof s.priceUsdc !== 'string' && typeof s.priceUsdc !== 'number') return null;
   let cents;
   try { cents = cataloguePriceCents(String(s.priceUsdc)); } catch { return null; }
-  if (cents !== 2 || s.payment?.network !== MAINNET || typeof s.payment.asset !== 'string' ||
+  if (cents !== DEX_PRICE_CENTS || s.payment?.network !== MAINNET || typeof s.payment.asset !== 'string' ||
       s.payment.asset.toLowerCase() !== USDC[MAINNET].toLowerCase()) return null;
   const schema = s.inputSchema;
   if (!schema || !(Object.hasOwn(schema, 'oneOf') ? matchesLegacyDexSchema(schema) : matchesConditionalDexSchema(schema))) return null;
-  return { tool:'wai_dex_liquidity', id:s.id, name:String(s.name || s.id).slice(0,120),
+  return { tool: DEX_TOOL_NAME, id:s.id, name:String(s.name || s.id).slice(0,120),
     description:String(s.description || '').slice(0,500), endpoint:endpoint.href, cents, dex:true,
     fields:{chainId:{type:'integer'},protocol:{type:'string'},tokenIn:{type:'string'},tokenOut:{type:'string'},poolAddress:{type:'string'},fee:{type:'integer'},tickSpacing:{type:'integer'},stable:{type:'boolean'},tradeSizes:{type:'array'}},
     required:['chainId','protocol','tokenIn'] };

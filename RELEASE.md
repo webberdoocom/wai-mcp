@@ -1,6 +1,6 @@
-# Publishing WAI MCP 0.2.0
+# Publishing WAI MCP 0.2.1
 
-The release serves seven intelligence tools over MCP stdio. Six are built in, and DEX Liquidity Intelligence is discovered from the WAI service catalogue. The [README](README.md) lists all seven tools, their prices and the Node.js 20.10+ installation steps. After npm publication, install with `npm install --prefix ./wai-client @webberdoo/wai-mcp@0.2.0` and use the installed `bin/wai-mcp.mjs` entry point.
+The release serves seven intelligence tools over MCP stdio. All seven appear on the first tool list by default. DEX calls require a validated live WAI service catalogue. The [README](README.md) lists all seven tools, their prices and the Node.js 20.10+ installation steps. After npm publication, install with `npm install --prefix ./wai-client @webberdoo/wai-mcp@0.2.1` and use the installed `bin/wai-mcp.mjs` entry point.
 
 ## Verify the candidate
 
@@ -13,8 +13,8 @@ npm run test:release
 npm run test:tarball
 mcp-publisher validate
 npm pack --ignore-scripts
-tar -tf webberdoo-wai-mcp-0.2.0.tgz
-Get-FileHash webberdoo-wai-mcp-0.2.0.tgz
+tar -tf webberdoo-wai-mcp-0.2.1.tgz
+Get-FileHash webberdoo-wai-mcp-0.2.1.tgz
 git status --short --untracked-files=all
 git diff --cached --check
 ```
@@ -23,11 +23,11 @@ The npm archive has 11 entries. Review the tarball and the intended staged files
 
 ## Publish the verified release
 
-Publish the inspected archive to npm as `@webberdoo/wai-mcp@0.2.0`. Check the public version, integrity and `mcpName` before submitting `server.json` to the Official MCP Registry as `io.github.webberdoocom/wai-mcp`. Authenticate the Registry publisher as `webberdoocom`. Publish the reviewed source and tag `v0.2.0` from `webberdoocom/wai-mcp`. [npm publishing](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages/) · [MCP Registry publishing](https://modelcontextprotocol.io/registry/quickstart)
+Publish the inspected archive to npm as `@webberdoo/wai-mcp@0.2.1`. Check the public version, integrity and `mcpName` before submitting `server.json` to the Official MCP Registry as `io.github.webberdoocom/wai-mcp`. Authenticate the Registry publisher as `webberdoocom`. Publish the reviewed source and tag `v0.2.1` from `webberdoocom/wai-mcp`. [npm publishing](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages/) · [MCP Registry publishing](https://modelcontextprotocol.io/registry/quickstart)
 
 ```powershell
-npm publish ./webberdoo-wai-mcp-0.2.0.tgz --access public --registry=https://registry.npmjs.org/
-npm view @webberdoo/wai-mcp@0.2.0 version mcpName dist.integrity --registry=https://registry.npmjs.org/
+npm publish ./webberdoo-wai-mcp-0.2.1.tgz --access public --registry=https://registry.npmjs.org/
+npm view @webberdoo/wai-mcp@0.2.1 version mcpName dist.integrity --registry=https://registry.npmjs.org/
 mcp-publisher login github
 mcp-publisher publish
 ```

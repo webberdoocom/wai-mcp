@@ -25,7 +25,7 @@ Install Node.js 20.10 or later with npm. Open a terminal in the folder where you
 ```sh
 node --version
 npm --version
-npm install --prefix ./wai-client @webberdoo/wai-mcp@0.2.0
+npm install --prefix ./wai-client @webberdoo/wai-mcp@0.2.1
 node -p "require('node:path').resolve('wai-client/node_modules/@webberdoo/wai-mcp/bin/wai-mcp.mjs').split(require('node:path').sep).join('/')"
 ```
 
@@ -63,7 +63,7 @@ Save the file, fully quit Claude Desktop and reopen it. Open **Connectors → Ma
 
 ### 3. Discover the tools and request a free quote
 
-Open your client's tools list for `wai`. Six tools are available at startup. `wai_dex_liquidity` appears after the first successful catalogue fetch. The table above shows each tool's inputs and price.
+Open your client's tools list for `wai`. All seven tools appear on the first list by default, including `wai_dex_liquidity`. The table above shows each tool's inputs and price.
 
 For your first call, ask your client to run `verify_uk_company` with `{"companyNumber":"00000006"}` and show the quote. Approve the tool call if your client prompts you. With payments off, the adapter makes an unsigned request to WAI. WAI responds with HTTP 402 (Payment Required), and the client receives a JSON tool result with `status: payment_required`, `network: eip155:8453` and `priceUSDC: 0.01`. No wallet is needed to receive that quote. [WAI service](https://wai.webberdoo.com)
 
@@ -75,7 +75,7 @@ For your first call, ask your client to run `verify_uk_company` with `{"companyN
 
 `WAI_MAX_PER_CALL_USDC` defaults to `0.03`. `WAI_MAX_SESSION_USDC` defaults to `0.10` and must cover the per-call limit. The adapter checks the service price ceiling, network, token and spending limits before signing. Concurrent calls share a reservation budget within one server process. Restarting the MCP process resets its budget. For a session capped at one 0.01 USDC verification, set both variables to `0.01` in the server's environment. A successful paid result includes `settlementStatus: confirmed` and a transaction hash. An explicit rejection returns `payment_failed`. Pending or unconfirmed settlement returns `payment_uncertain`. A failed or incomplete report after a charge returns `report_failed` and includes the backend request or report ID when available. The adapter keeps the spending reservation and sends no automatic payment retry. Use the available reference to check your wallet or purchase records before placing another order.
 
-The adapter refreshes the WAI service catalogue every five minutes. Set `WAI_DYNAMIC_DISCOVERY=off` to expose only the six built-in tools. Add `dex-liquidity` to the comma-separated `WAI_DYNAMIC_PAID_ALLOWLIST` to enable paid DEX calls. Without that entry, the DEX tool can still return quotes.
+The adapter fetches the WAI service catalogue at startup and refreshes it every five minutes. DEX appears immediately, and calling it requires a compatible live catalogue. If validation fails, the tool reports that DEX is unavailable before making a payment attempt. Set `WAI_DYNAMIC_DISCOVERY=off` to expose only the six original tools. Add `dex-liquidity` to the comma-separated `WAI_DYNAMIC_PAID_ALLOWLIST` to enable paid DEX calls. Without that entry, the DEX tool can still return quotes.
 
 The client automatically saves each successfully delivered paid report to `reports/` under the **MCP process's working directory**. When you run `npm start` from a checkout, the folder is `reports/` in that checkout. With a desktop or npm-launched host, it is the directory that host starts the MCP process in. The client creates the folder on the first successful save.
 
@@ -87,7 +87,7 @@ Files use `wai-<service-id>-<report-id>.json`, and existing files are left intac
 
 | Symptom | What to check |
 |---|---|
-| npm reports `E404` | Check the scope and package spelling. The npm command works once version `0.2.0` is public. Before publication, use the source checkout instructions. |
+| npm reports `E404` | Check the scope and package spelling. The npm command works once version `0.2.1` is public. Before publication, use the source checkout instructions. |
 | The client cannot find Node (`ENOENT`) | Find Node with `where.exe node` on Windows or `command -v node` on macOS or Linux. Use the full executable path in `command`. |
 | The server fails to start or the tools are missing | Confirm the JSON is valid, the entry path exists, and it points to the installed `bin/wai-mcp.mjs`. Fully restart the client and check its MCP logs. |
 | You receive a `payment_required` result | This is the expected quote with payments off. Review the price and network before choosing whether to enable purchases. |

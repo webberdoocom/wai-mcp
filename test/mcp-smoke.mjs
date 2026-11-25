@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { API_BASE, MAINNET } from '../src/core.mjs';
+import { API_BASE, MAINNET, SERVICES } from '../src/core.mjs';
+import { DEX_TOOL_NAME } from '../src/discovery.mjs';
 
 const liveDex = process.argv.includes('--live-dex');
 const child = spawn(process.execPath, ['dist/server.mjs'], {
@@ -41,25 +42,24 @@ try {
   const init=await awaitResponse(1);
   if(init.error) throw new Error(JSON.stringify(init.error));
   send({jsonrpc:'2.0',method:'notifications/initialized'});
-  const deadline = Date.now() + 10000;
-  let dex;
-  for (let id = 2; ; id++) {
-    send({jsonrpc:'2.0',id,method:'tools/list',params:{}});
-    const list = await awaitResponse(id);
-    const tools = list.result?.tools;
-    assert.ok(Array.isArray(tools), 'MCP tools/list failed');
-    for (const name of ['verify_uk_company','investigate_uk_company','inspect_smart_contract','check_token_allowance','inspect_uk_business_insolvency','inspect_website_trust']) {
-      assert.ok(tools.some(tool => tool.name === name), 'Missing MCP tool: ' + name);
-    }
-    dex = tools.find(tool => tool.name === 'wai_dex_liquidity');
-    if (!liveDex || dex || Date.now() >= deadline) break;
-    await delay(250);
-  }
+  send({jsonrpc:'2.0',id:2,method:'tools/list',params:{}});
+  const list = await awaitResponse(2);
+  const tools = list.result?.tools;
+  assert.ok(Array.isArray(tools), 'MCP tools/list failed');
+  const expected = liveDex ? [...Object.keys(SERVICES), DEX_TOOL_NAME] : Object.keys(SERVICES);
+  assert.deepEqual(tools.map(tool => tool.name).sort(), expected.sort());
   if(stderr.includes('Invalid stdout JSON-RPC')) throw new Error(stderr);
   if (liveDex) {
-    assert.ok(dex, 'Live DEX tool missing from MCP tools/list');
+    const dex = tools.find(tool => tool.name === DEX_TOOL_NAME);
     assert.match(dex.description, /Price: \$0\.02 USDC\./);
     assert.equal(dex.inputSchema.properties.chainId.const, 8453);
+    const deadline = Date.now() + 10000;
+    while (!stderr.includes('DEX catalogue validated') &&
+           !stderr.includes('DEX catalogue unavailable or incompatible') &&
+           !stderr.includes('WAI discovery unavailable') && Date.now() < deadline) {
+      await delay(100);
+    }
+    assert.match(stderr, /DEX catalogue validated/, stderr);
     console.log(`PASS: MCP discovered wai_dex_liquidity (dex-liquidity), 0.020000 USDC, Base Mainnet (${MAINNET}). No tool calls or payments.`);
   } else {
     process.stdout.write('PASS: MCP initialized and all six tools registered; no external API calls made.\n');
