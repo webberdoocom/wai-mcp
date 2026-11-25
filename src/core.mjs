@@ -1,5 +1,5 @@
 // Dependency-free guardrails, shared with offline tests.
-export const VERSION = '0.2.1';
+export const VERSION = '0.2.2';
 export const API_BASE = 'https://wai.webberdoo.com';
 export const MAINNET = 'eip155:8453';
 export const SEPOLIA = 'eip155:84532';
