@@ -41,7 +41,13 @@ const mockedFetch = async (target, init) => {
     if (payload?.accepted?.network !== 'eip155:8453' || payload?.accepted?.amount !== '10000')
       throw new Error('Wrong network or amount in signed x402 header');
     if (!payload?.payload?.signature) throw new Error('Missing generated signature');
-    return new Response(JSON.stringify({reportId: 'offline-mock-only', findings: [], evidence: [], payment: {status: 'mock'}}), {status:200, headers:{'content-type':'application/json'}});
+    return Response.json({
+      reportId: '1'.repeat(32), serviceId: 'company-verification',
+      findings: { recordFound: true }, evidence: { profile: 'mock profile' },
+    }, {status:200, headers:{
+      'content-type': 'application/json',
+      'payment-response': encode({success:true, network:'eip155:8453', transaction:'0x' + 'a'.repeat(64)}),
+    }});
   }
   logs.unsigned++;
   if (logs.unsigned > 2) throw new Error('Extra unsigned request');
@@ -50,6 +56,7 @@ const mockedFetch = async (target, init) => {
 const env = {
   WAI_BASE_URL: base,
   WAI_PAYMENT_MODE: 'on',
+  WAI_SAVE_REPORTS: 'false',
   WAI_NETWORK: 'eip155:8453',
   WAI_MAX_PER_CALL_USDC: '0.01',
   WAI_MAX_SESSION_USDC: '0.01',
@@ -60,7 +67,7 @@ console.log('Offline x402 signing compatibility: mocked WAI response, ephemeral 
 try {
   const runner = makeRunner({env, fetchImpl:mockedFetch});
   const result = await runner.run('verify_uk_company', {companyNumber:'00000006'});
-  if (result.status !== 'ok' || !result.paymentAttempted || logs.unsigned !== 2 || logs.signed !== 1)
+  if (result.status !== 'ok' || result.settlementStatus !== 'confirmed' || !result.paymentAttempted || logs.unsigned !== 2 || logs.signed !== 1)
     throw new Error('Unexpected result or number of signed/unsigned calls');
   console.log('PASS: x402 SDK created one signature and MCP adapter retried with payment header.');
   console.log(`Mock requests: ${logs.unsigned} unsigned, ${logs.signed} signed. USDC spent: 0.`);

@@ -6,7 +6,8 @@
         "REPLACE_WITH_ABSOLUTE_PROJECT_PATH/bin/wai-mcp.mjs"
       ],
       "env": {
-        "WAI_PAYMENT_MODE": "off"
+        "WAI_PAYMENT_MODE": "off",
+        "WAI_SAVE_REPORTS": "true"
       }
     }
   }

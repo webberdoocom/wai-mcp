@@ -51,7 +51,9 @@ test('an uncertain payment attempt retains its spending reservation', async () =
       throw new Error('Simulated timeout after payment attempt');
     },
   });
-  await assert.rejects(runner.run('verify_uk_company',{companyNumber:'00000006'}), /Simulated timeout/);
+  const result = await runner.run('verify_uk_company',{companyNumber:'00000006'});
+  assert.equal(result.status, 'payment_uncertain');
+  assert.equal(result.settlementStatus, 'uncertain');
   await assert.rejects(runner.run('verify_uk_company',{companyNumber:'00000006'}), /WAI_MAX_SESSION_USDC/);
   assert.equal(paidAttempts, 1);
 });

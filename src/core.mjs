@@ -1,4 +1,5 @@
 // Dependency-free guardrails, shared with offline tests.
+export const VERSION = '0.2.0';
 export const API_BASE = 'https://wai.webberdoo.com';
 export const MAINNET = 'eip155:8453';
 export const SEPOLIA = 'eip155:84532';
@@ -11,6 +12,8 @@ export const SERVICES = Object.freeze({
   investigate_uk_company: { id: 'company-due-diligence', cents: 3 },
   inspect_smart_contract: { id: 'smart-contract', cents: 3 },
   check_token_allowance: { id: 'token-allowance', cents: 2 },
+  inspect_uk_business_insolvency: { id: 'business-insolvency', cents: 3 },
+  inspect_website_trust: { id: 'website-trust', cents: 2 },
 });
 export function parseConfig(env = process.env) {
   const base = new URL(env.WAI_BASE_URL || API_BASE);

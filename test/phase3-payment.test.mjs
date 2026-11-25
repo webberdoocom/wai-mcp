@@ -45,9 +45,18 @@ test('dry-run runner accepts multi-offer and never invokes signing', async () =>
 });
 test('opted-in mock remains bounded with multi-offer, no real signatures', async () => {
   let attempts = 0;
-  const runner = makeRunner({ env: { WAI_PAYMENT_MODE:'on', WAI_EVM_PRIVATE_KEY: '0x'+'1'.repeat(64), WAI_MAX_PER_CALL_USDC:'0.01',WAI_MAX_SESSION_USDC:'0.01' },
+  const runner = makeRunner({ env: { WAI_SAVE_REPORTS:'false', WAI_PAYMENT_MODE:'on', WAI_EVM_PRIVATE_KEY: '0x'+'1'.repeat(64), WAI_MAX_PER_CALL_USDC:'0.01',WAI_MAX_SESSION_USDC:'0.01' },
     fetchImpl: async () => payment402(challenge(offer(SEPOLIA),offer(MAINNET))),
-    paymentFetchFactory: async () => async () => { attempts++; return new Response('{"ok":true}',{status:200}); }
+    paymentFetchFactory: async () => async () => {
+      attempts++;
+      const receipt = Buffer.from(JSON.stringify({
+        success: true, network: MAINNET, transaction: '0x' + 'a'.repeat(64),
+      })).toString('base64');
+      return Response.json({
+        reportId: 'a'.repeat(32), serviceId: 'company-verification',
+        findings: { recordFound: true }, evidence: { profile: 'mock profile' },
+      }, { headers: { 'payment-response': receipt } });
+    },
   });
   const result = await runner.run('verify_uk_company',{companyNumber:'00000006'});
   assert.equal(result.status,'ok'); assert.equal(attempts,1);

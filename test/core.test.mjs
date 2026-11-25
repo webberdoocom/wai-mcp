@@ -38,10 +38,22 @@ test('successful free response remains readable without wallet',async()=>{
  assert.deepEqual((await runner.run('verify_uk_company',{companyNumber:'00000006'})).response,{ok:true});
 });
 test('opted-in mock payment consumes budget once and returns JSON',async()=>{
- const env={WAI_PAYMENT_MODE:'on',WAI_EVM_PRIVATE_KEY:'0x'+'1'.repeat(64),WAI_MAX_SESSION_USDC:'0.03'};
+ const env={WAI_SAVE_REPORTS:'false',WAI_PAYMENT_MODE:'on',WAI_EVM_PRIVATE_KEY:'0x'+'1'.repeat(64),WAI_MAX_SESSION_USDC:'0.03'};
  let signed=0;
  const fetchImpl=async()=>new Response(null,{status:402,headers:{'payment-required':Buffer.from(JSON.stringify(challenge())).toString('base64')}});
- const runner=makeRunner({env,fetchImpl,paymentFetchFactory:async()=>async()=>{signed++;return new Response('{"report":1}',{status:200});}});
+ const receipt = Buffer.from(JSON.stringify({
+   success: true, network: MAINNET, transaction: '0x' + 'a'.repeat(64),
+ })).toString('base64');
+ const runner = makeRunner({
+   env, fetchImpl,
+   paymentFetchFactory: async () => async () => {
+     signed++;
+     return Response.json({
+       reportId: 'a'.repeat(32), serviceId: 'company-verification',
+       findings: { recordFound: true }, evidence: { profile: 'mock profile' },
+     }, { headers: { 'payment-response': receipt } });
+   },
+ });
  assert.equal((await runner.run('verify_uk_company',{companyNumber:'00000006'})).status,'ok');
  assert.equal(signed,1);
 });

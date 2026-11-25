@@ -24,3 +24,8 @@ keystore/
 # Local archive of earlier deployment and override instructions.
 /README-*.txt
 /README-*.md
+
+# Private live-payment utilities and local release archives.
+/RUN-PHASE*.ps1
+/test/live-paid-*.mjs
+/RELEASE-*-INSTRUCTIONS.txt
